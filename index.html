@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelPerfect Resizer | Professional Image Optimization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Light, professional background */
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f0f2f5;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; /* slate-300 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; /* slate-500 */
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        @keyframes pulse-border {
+            0% { border-color: #3b82f6; /* blue-500 */ box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { border-color: #93c5fd; /* blue-300 */ box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        .drop-zone-active {
+            animation: pulse-border 1.5s infinite;
+            border-style: dashed;
+        }
+
+        .btn-primary {
+            background-color: #2563eb; /* blue-600 */
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8; /* blue-700 */
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .input-field {
+            border-color: #cbd5e1; /* slate-300 */
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #3b82f6; /* blue-500 */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+
+        .file-info-item, .original-thumbnail-container {
+            opacity: 0;
+            transform: translateX(-10px);
+            animation: slideIn 0.5s ease-out forwards;
+        }
+        @keyframes slideIn {
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Staggered animations for file info */
+        .file-info-item:nth-child(1) { animation-delay: 0.1s; }
+        .file-info-item:nth-child(2) { animation-delay: 0.2s; }
+        .file-info-item:nth-child(3) { animation-delay: 0.3s; }
+        .file-info-item:nth-child(4) { animation-delay: 0.4s; }
+        .original-thumbnail-container { animation-delay: 0.05s; }
+
+
+        #appTitle {
+            background: linear-gradient(45deg, #3b82f6, #1e40af);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .thumbnail-preview {
+            max-width: 150px; /* Max width for the thumbnail */
+            max-height: 150px; /* Max height for the thumbnail */
+            border: 1px solid #e5e7eb; /* gray-200 */
+            border-radius: 0.375rem; /* rounded-md */
+            object-fit: contain; /* Or 'cover', depending on desired effect */
+            background-color: #f9fafb; /* gray-50 */
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
+
+    <div class="w-full max-w-4xl space-y-8">
+        <header class="text-center animate-fadeIn" style="animation-delay: 0.1s;">
+            <h1 id="appTitle" class="text-4xl md:text-5xl font-extrabold tracking-tight">
+                PixelPerfect Resizer
+            </h1>
+            <p class="mt-3 text-lg text-slate-600">
+                Effortlessly resize and optimize your images with professional precision.
+            </p>
+        </header>
+
+        <main class="card p-6 md:p-10 animate-fadeIn" style="animation-delay: 0.3s;">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <div class="space-y-6">
+                    <div>
+                        <label for="imageUpload" class="block text-sm font-medium text-slate-700 mb-1">Upload Image</label>
+                        <div id="dropZone" class="mt-1 flex justify-center px-6 pt-10 pb-10 border-2 border-slate-300 border-dashed rounded-md cursor-pointer hover:border-blue-500 transition-colors duration-300 ease-in-out">
+                            <div class="space-y-1 text-center">
+                                <svg class="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <div class="flex text-sm text-slate-600">
+                                    <span class="relative bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                        <span>Upload a file</span>
+                                        <input id="imageUpload" name="imageUpload" type="file" class="sr-only" accept="image/*">
+                                    </span>
+                                    <p class="pl-1">or drag and drop</p>
+                                </div>
+                                <p class="text-xs text-slate-500">PNG, JPG, GIF, WEBP up to 10MB</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="originalThumbnailDiv" class="original-thumbnail-container hidden">
+                        <h3 class="text-sm font-medium text-slate-700 mb-1">Original Preview:</h3>
+                        <img id="originalImageThumbnail" src="#" alt="Original Uploaded Thumbnail" class="thumbnail-preview"/>
+                    </div>
+
+                    <div id="imageInfo" class="space-y-3 hidden">
+                        <h3 class="text-lg font-semibold text-slate-800 border-b pb-2">Image Details:</h3>
+                        <div id="fileNameInfo" class="file-info-item flex justify-between text-sm"><span class="font-medium text-slate-600">Name:</span> <span class="text-slate-800 truncate"></span></div>
+                        <div id="originalDimensionsInfo" class="file-info-item flex justify-between text-sm"><span class="font-medium text-slate-600">Original Size:</span> <span class="text-slate-800"></span></div>
+                        <div id="fileSizeInfo" class="file-info-item flex justify-between text-sm"><span class="font-medium text-slate-600">File Size:</span> <span class="text-slate-800"></span></div>
+                        <div id="fileTypeInfo" class="file-info-item flex justify-between text-sm"><span class="font-medium text-slate-600">Type:</span> <span class="text-slate-800"></span></div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="targetWidth" class="block text-sm font-medium text-slate-700">Target Width (px)</label>
+                            <input type="number" id="targetWidth" placeholder="e.g., 800" class="input-field mt-1 block w-full px-3 py-2 border rounded-md shadow-sm sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="targetHeight" class="block text-sm font-medium text-slate-700">Target Height (px)</label>
+                            <input type="number" id="targetHeight" placeholder="e.g., 600" class="input-field mt-1 block w-full px-3 py-2 border rounded-md shadow-sm sm:text-sm">
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-500 -mt-2">Leave one blank to maintain aspect ratio automatically, or fill both to fit within dimensions.</p>
+
+
+                    <div>
+                        <label for="outputFormat" class="block text-sm font-medium text-slate-700">Output Format</label>
+                        <select id="outputFormat" class="input-field mt-1 block w-full pl-3 pr-10 py-2 border bg-white rounded-md shadow-sm sm:text-sm">
+                            <option value="image/jpeg">JPEG (Best for photos)</option>
+                            <option value="image/png">PNG (Best for graphics, transparency)</option>
+                            <option value="image/webp">WEBP (Modern, efficient)</option>
+                        </select>
+                    </div>
+                    <div id="jpegQualityContainer" class="hidden">
+                        <label for="jpegQuality" class="block text-sm font-medium text-slate-700">JPEG Quality (0.1 - 1.0)</label>
+                        <input type="number" id="jpegQuality" value="0.9" step="0.05" min="0.1" max="1.0" class="input-field mt-1 block w-full px-3 py-2 border rounded-md shadow-sm sm:text-sm">
+                    </div>
+
+                    <div class="pt-2">
+                         <button id="resizeButton" class="w-full btn-primary py-3 text-base font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            Resize & Download
+                        </button>
+                    </div>
+                    
+                    <div id="previewArea" class="mt-6 text-center hidden">
+                        <h3 class="text-md font-medium text-slate-700 mb-2">Resized Preview:</h3>
+                        <div class="bg-slate-100 p-2 rounded-md border border-slate-200 inline-block">
+                            <img id="resizedPreview" src="#" alt="Resized image preview" class="max-w-full h-auto max-h-48 rounded shadow-md"/>
+                        </div>
+                        <div id="newDimensionsInfo" class="text-sm text-slate-600 mt-2"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="messageArea" class="mt-6"></div>
+        </main>
+
+        <footer class="text-center text-sm text-slate-500 animate-fadeIn" style="animation-delay: 0.5s;">
+            <p>&copy; <span id="currentYear"></span> PixelPerfect Resizer. Crafted with precision.</p>
+        </footer>
+    </div>
+
+    <canvas id="imageCanvas" style="display:none;"></canvas>
+
+    <script>
+        const imageUpload = document.getElementById('imageUpload');
+        const dropZone = document.getElementById('dropZone');
+        const targetWidthInput = document.getElementById('targetWidth');
+        const targetHeightInput = document.getElementById('targetHeight'); // New height input
+        const outputFormatSelect = document.getElementById('outputFormat');
+        const jpegQualityContainer = document.getElementById('jpegQualityContainer');
+        const jpegQualityInput = document.getElementById('jpegQuality');
+        const resizeButton = document.getElementById('resizeButton');
+        const imageCanvas = document.getElementById('imageCanvas');
+        
+        const originalThumbnailDiv = document.getElementById('originalThumbnailDiv'); // New thumbnail div
+        const originalImageThumbnail = document.getElementById('originalImageThumbnail'); // New thumbnail img element
+
+        const imageInfoDiv = document.getElementById('imageInfo');
+        const fileNameInfo = document.getElementById('fileNameInfo').lastElementChild;
+        const originalDimensionsInfo = document.getElementById('originalDimensionsInfo').lastElementChild;
+        const fileSizeInfo = document.getElementById('fileSizeInfo').lastElementChild;
+        const fileTypeInfo = document.getElementById('fileTypeInfo').lastElementChild;
+
+        const previewArea = document.getElementById('previewArea');
+        const resizedPreview = document.getElementById('resizedPreview');
+        const newDimensionsInfo = document.getElementById('newDimensionsInfo');
+        const messageArea = document.getElementById('messageArea');
+        const ctx = imageCanvas.getContext('2d');
+        
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        let originalImageFile = null;
+        let originalImageObject = null; // Store the loaded image object
+
+        // Drag and Drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('drop-zone-active', 'border-blue-500'), false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('drop-zone-active', 'border-blue-500'), false);
+        });
+
+        dropZone.addEventListener('drop', handleDrop, false);
+        dropZone.addEventListener('click', () => imageUpload.click());
+        imageUpload.addEventListener('change', handleFileSelect);
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length) {
+                handleFile(files[0]);
+            }
+        }
+        
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length) {
+                handleFile(files[0]);
+            }
+        }
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showMessage('Error: Please upload an image file.', 'error');
+                originalImageFile = null;
+                originalImageObject = null;
+                resizeButton.disabled = true;
+                imageInfoDiv.classList.add('hidden');
+                originalThumbnailDiv.classList.add('hidden');
+                return;
+            }
+            originalImageFile = file;
+            resizeButton.disabled = false; // Enable resize button
+            
+            fileNameInfo.textContent = file.name;
+            fileTypeInfo.textContent = file.type;
+            fileSizeInfo.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    originalImageObject = img; // Store the loaded image
+                    originalDimensionsInfo.textContent = `${img.width} x ${img.height} px`;
+                    
+                    // Display original thumbnail
+                    originalImageThumbnail.src = e.target.result;
+                    originalThumbnailDiv.classList.remove('hidden');
+                    originalThumbnailDiv.style.animation = 'none'; originalThumbnailDiv.offsetHeight; originalThumbnailDiv.style.animation = '';
+
+
+                    imageInfoDiv.classList.remove('hidden');
+                    imageInfoDiv.querySelectorAll('.file-info-item').forEach(item => {
+                        item.style.animation = 'none'; item.offsetHeight; item.style.animation = '';
+                    });
+                }
+                img.onerror = () => {
+                    showMessage('Error: Could not load image data. Please try a different file.', 'error');
+                    originalImageFile = null;
+                    originalImageObject = null;
+                    resizeButton.disabled = true;
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+            showMessage('Image selected. Adjust settings and click resize.', 'success', 2000);
+            previewArea.classList.add('hidden'); // Hide old resized preview
+        }
+
+        outputFormatSelect.addEventListener('change', () => {
+            jpegQualityContainer.classList.toggle('hidden', outputFormatSelect.value !== 'image/jpeg');
+        });
+        outputFormatSelect.dispatchEvent(new Event('change')); // Initial state
+
+        resizeButton.addEventListener('click', () => {
+            if (!originalImageFile || !originalImageObject) {
+                showMessage('Please upload an image first.', 'error');
+                return;
+            }
+
+            const img = originalImageObject; // Use the stored image object
+            let inputTargetWidth = parseInt(targetWidthInput.value, 10);
+            let inputTargetHeight = parseInt(targetHeightInput.value, 10);
+            const outputFormat = outputFormatSelect.value;
+            const jpegQuality = parseFloat(jpegQualityInput.value);
+
+            let finalWidth, finalHeight;
+            const originalAspectRatio = img.width / img.height;
+
+            // Handle different input combinations
+            if (inputTargetWidth > 0 && inputTargetHeight > 0) {
+                // Both width and height specified - use exact dimensions
+                finalWidth = inputTargetWidth;
+                finalHeight = inputTargetHeight;
+            } else if (inputTargetWidth > 0) {
+                // Only width specified
+                finalWidth = inputTargetWidth;
+                finalHeight = Math.round(inputTargetWidth / originalAspectRatio);
+            } else if (inputTargetHeight > 0) {
+                // Only height specified
+                finalHeight = inputTargetHeight;
+                finalWidth = Math.round(inputTargetHeight * originalAspectRatio);
+            } else {
+                showMessage('Please specify at least a target width or height.', 'error');
+                return;
+            }
+
+            // Ensure minimum dimensions
+            finalWidth = Math.max(1, finalWidth);
+            finalHeight = Math.max(1, finalHeight);
+
+            // Log the dimensions for debugging
+            console.log('Input dimensions:', { inputTargetWidth, inputTargetHeight });
+            console.log('Final dimensions:', { finalWidth, finalHeight });
+
+            if (outputFormat === 'image/jpeg' && (isNaN(jpegQuality) || jpegQuality < 0.1 || jpegQuality > 1.0)) {
+                showMessage('Please enter a valid JPEG quality between 0.1 and 1.0.', 'error');
+                return;
+            }
+
+            try {
+                imageCanvas.width = finalWidth;
+                imageCanvas.height = finalHeight;
+                
+                if (outputFormat === 'image/jpeg') {
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, finalWidth, finalHeight);
+                } else {
+                    ctx.clearRect(0, 0, finalWidth, finalHeight);
+                }
+                
+                ctx.drawImage(img, 0, 0, finalWidth, finalHeight);
+
+                const dataURL = imageCanvas.toDataURL(outputFormat, outputFormat === 'image/jpeg' ? jpegQuality : undefined);
+                
+                resizedPreview.src = dataURL;
+                previewArea.classList.remove('hidden');
+                newDimensionsInfo.textContent = `Resized to: ${finalWidth} x ${finalHeight} px`;
+
+                const link = document.createElement('a');
+                const extension = outputFormat.split('/')[1].replace('jpeg', 'jpg');
+                const originalNameWithoutExt = originalImageFile.name.split('.').slice(0, -1).join('.') || 'image';
+                link.download = `${originalNameWithoutExt}_${finalWidth}x${finalHeight}.${extension}`;
+                link.href = dataURL;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showMessage(`Image resized and download started!`, 'success');
+
+            } catch (error) {
+                console.error("Error during image processing:", error);
+                showMessage(`Error: ${error.message}. Try a different image or format.`, 'error');
+            }
+        });
+        
+        let messageTimeout;
+        function showMessage(message, type = 'success', duration = 4000) {
+            messageArea.innerHTML = ''; 
+            clearTimeout(messageTimeout);
+            if (!message) return;
+
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = message;
+            messageDiv.className = `p-4 rounded-md text-sm animate-fadeIn ${type === 'success' ? 'bg-green-100 text-green-700 border border-green-300' : 'bg-red-100 text-red-700 border border-red-300'}`;
+            messageArea.appendChild(messageDiv);
+
+            messageTimeout = setTimeout(() => {
+                if (messageDiv.parentNode === messageArea) { // Check if still child
+                    messageDiv.style.transition = 'opacity 0.5s ease-out';
+                    messageDiv.style.opacity = '0';
+                    setTimeout(() => {
+                        if (messageDiv.parentNode === messageArea) messageArea.removeChild(messageDiv);
+                    }, 500);
+                }
+            }, duration);
+        }
+    </script>
+</body>
+</html>
